@@ -63,10 +63,20 @@ func main() {
 			authHandler.Login(w, r)
 		case r.URL.Path == "/api/auth/change-password":
 			authHandler.ChangePassword(w, r)
+		case r.URL.Path == "/api/upload":
+			imageHandler.UploadImage(w, r)
 		case r.URL.Path == "/api/images/upload":
 			imageHandler.UploadImage(w, r)
 		case r.URL.Path == "/api/images/my":
 			imageHandler.GetMyImages(w, r)
+		case r.URL.Path == "/api/images":
+			imageHandler.GetMyImages(w, r)
+		case r.URL.Path == "/api/profile":
+			authHandler.GetProfile(w, r)
+		case r.URL.Path == "/api/profile/update":
+			authHandler.UpdateProfile(w, r)
+		case r.URL.Path == "/api/profile/generate-avatar":
+			authHandler.GenerateAvatar(w, r)
 		case strings.HasPrefix(r.URL.Path, "/api/images/") && r.Method == "DELETE":
 			imageHandler.DeleteImage(w, r)
 		default:
