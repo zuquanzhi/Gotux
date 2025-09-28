@@ -1,16 +1,17 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strings"
 
+	"gotux/database"
 	"gotux/models"
 	"gotux/utils"
 )
 
 type AuthHandler struct {
-	DB *sql.DB
+	DBManager *database.DatabaseManager
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +28,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// 检查用户是否已存在
 	var existingUser models.User
-	err := h.DB.QueryRow("SELECT id, username, email, password FROM users WHERE username = ? OR email = ?",
+	err := h.DBManager.MainDB.QueryRow("SELECT id, username, email, password FROM users WHERE username = ? OR email = ?",
 		user.Username, user.Email).Scan(&existingUser.ID, &existingUser.Username, &existingUser.Email, &existingUser.Password)
 
 	if err == nil {
@@ -42,7 +43,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.DB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+	result, err := h.DBManager.MainDB.Exec("INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
 		user.Username, user.Email, hashedPassword)
 	if err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
@@ -50,6 +51,14 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID, _ := result.LastInsertId()
+	
+	// 为新用户创建专属数据库
+	err = h.DBManager.CreateUserDatabase(userID)
+	if err != nil {
+		http.Error(w, "Failed to create user database", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
@@ -79,7 +88,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	// 获取用户
 	var user models.User
-	err := h.DB.QueryRow("SELECT id, username, email, password FROM users WHERE username = ?",
+	err := h.DBManager.MainDB.QueryRow("SELECT id, username, email, password FROM users WHERE username = ?",
 		credentials.Username).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 
 	if err != nil {
@@ -103,11 +112,128 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
-		"token":   token,
-		"user": map[string]interface{}{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
+		"data": map[string]interface{}{
+			"token": token,
+			"user": map[string]interface{}{
+				"id":       user.ID,
+				"username": user.Username,
+				"email":    user.Email,
+			},
 		},
+	})
+}
+
+func (h *AuthHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 从JWT获取用户ID
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Authorization required",
+		})
+		return
+	}
+
+	tokenString := authHeader[7:]
+	claims, err := utils.ParseJWT(tokenString)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Invalid token",
+		})
+		return
+	}
+
+	var passwordData struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&passwordData); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Invalid request body",
+		})
+		return
+	}
+
+	// 验证输入
+	if passwordData.CurrentPassword == "" || passwordData.NewPassword == "" {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Current password and new password are required",
+		})
+		return
+	}
+
+	if len(passwordData.NewPassword) < 6 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "New password must be at least 6 characters long",
+		})
+		return
+	}
+
+	// 获取当前用户信息
+	var user models.User
+	err = h.DBManager.MainDB.QueryRow("SELECT id, username, email, password FROM users WHERE id = ?",
+		claims.UserID).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "User not found",
+		})
+		return
+	}
+
+	// 验证当前密码
+	if !utils.CheckPasswordHash(passwordData.CurrentPassword, user.Password) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Current password is incorrect",
+		})
+		return
+	}
+
+	// 加密新密码
+	hashedNewPassword, err := utils.HashPassword(passwordData.NewPassword)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Failed to encrypt new password",
+		})
+		return
+	}
+
+	// 更新密码
+	_, err = h.DBManager.MainDB.Exec("UPDATE users SET password = ? WHERE id = ?",
+		hashedNewPassword, claims.UserID)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "Failed to update password",
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Password changed successfully",
 	})
 }
