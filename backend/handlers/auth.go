@@ -32,7 +32,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		user.Username, user.Email).Scan(&existingUser.ID, &existingUser.Username, &existingUser.Email, &existingUser.Password)
 
 	if err == nil {
-		http.Error(w, "Username or email already exists", http.StatusConflict)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "用户名或邮箱已存在",
+		})
 		return
 	}
 
@@ -92,13 +97,23 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		credentials.Username).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 
 	if err != nil {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "用户名或密码错误",
+		})
 		return
 	}
 
 	// 验证密码
 	if !utils.CheckPasswordHash(credentials.Password, user.Password) {
-		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"message": "用户名或密码错误",
+		})
 		return
 	}
 

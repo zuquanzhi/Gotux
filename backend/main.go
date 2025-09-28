@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gotux/database"
 	"gotux/handlers"
@@ -66,6 +67,8 @@ func main() {
 			imageHandler.UploadImage(w, r)
 		case r.URL.Path == "/api/images/my":
 			imageHandler.GetMyImages(w, r)
+		case strings.HasPrefix(r.URL.Path, "/api/images/") && r.Method == "DELETE":
+			imageHandler.DeleteImage(w, r)
 		default:
 			http.NotFound(w, r)
 		}
