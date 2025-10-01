@@ -169,22 +169,41 @@ onMounted(() => {
 .profile-page {
   max-width: 1200px;
   margin: 0 auto;
+  animation: fadeInUp 0.5s ease;
 }
 
 .card-header {
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
 }
 
 .profile-info {
   text-align: center;
 }
 
+:deep(.el-avatar) {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  font-size: 40px;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+}
+
 .info-item {
   display: flex;
   justify-content: space-between;
-  padding: 15px 0;
-  border-bottom: 1px solid #ebeef5;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.info-item:hover {
+  padding-left: 8px;
+  background: var(--bg-secondary);
+  margin: 0 -20px;
+  padding-left: 28px;
+  padding-right: 28px;
 }
 
 .info-item:last-child {
@@ -192,11 +211,35 @@ onMounted(() => {
 }
 
 .label {
-  color: #909399;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .value {
-  color: #303133;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+:deep(.el-card) {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-card:hover) {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+:deep(.el-input__inner) {
+  border-radius: var(--radius-md);
+}
+
+:deep(.el-button) {
+  border-radius: var(--radius-md);
+  font-weight: 500;
 }
 </style>

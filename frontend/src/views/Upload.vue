@@ -196,25 +196,71 @@ const formatBytes = (bytes) => {
 .upload-page {
   max-width: 1200px;
   margin: 0 auto;
+  animation: fadeInUp 0.5s ease;
 }
 
 .card-header {
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
 }
 
 .upload-demo {
   width: 100%;
 }
 
+:deep(.el-upload-dragger) {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  transition: all 0.3s ease;
+  padding: 60px 20px;
+}
+
+:deep(.el-upload-dragger:hover) {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  transform: scale(1.02);
+}
+
+:deep(.el-icon--upload) {
+  font-size: 64px;
+  color: var(--primary-color);
+  margin-bottom: 16px;
+}
+
+:deep(.el-upload__text) {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+:deep(.el-upload__text em) {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+:deep(.el-upload__tip) {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
 .upload-actions {
-  margin-top: 20px;
+  margin-top: 32px;
   text-align: center;
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.upload-actions .el-button {
+  min-width: 140px;
 }
 
 .image-name {
   font-size: 14px;
-  color: #303133;
+  font-weight: 500;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -222,7 +268,20 @@ const formatBytes = (bytes) => {
 
 .image-size {
   font-size: 12px;
-  color: #909399;
-  margin-top: 5px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+
+:deep(.el-card) {
+  transition: all 0.3s ease;
+}
+
+:deep(.el-card:hover) {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg) !important;
+}
+
+:deep(.el-image) {
+  border-radius: var(--radius-md);
 }
 </style>

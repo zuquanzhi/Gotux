@@ -1,57 +1,84 @@
 <template>
   <div class="dashboard">
-    <el-row :gutter="20">
+    <div class="welcome-banner">
+      <div class="welcome-content">
+        <h1>欢迎回来, {{ userStore.userInfo?.username }}! 👋</h1>
+        <p>让我们开始管理您的图片资源</p>
+      </div>
+    </div>
+
+    <el-row :gutter="24" class="stats-row">
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #409EFF">
-              <el-icon :size="30"><Picture /></el-icon>
+        <el-card shadow="hover" class="stat-card-wrapper">
+          <div class="stat-card gradient-blue">
+            <div class="stat-icon-container">
+              <div class="stat-icon">
+                <el-icon :size="32"><Picture /></el-icon>
+              </div>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.image_count }}</div>
               <div class="stat-label">图片总数</div>
             </div>
+            <div class="stat-trend">
+              <span class="trend-up">↑ 活跃</span>
+            </div>
           </div>
         </el-card>
       </el-col>
       
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #67C23A">
-              <el-icon :size="30"><FolderOpened /></el-icon>
+        <el-card shadow="hover" class="stat-card-wrapper">
+          <div class="stat-card gradient-green">
+            <div class="stat-icon-container">
+              <div class="stat-icon">
+                <el-icon :size="32"><FolderOpened /></el-icon>
+              </div>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ formatBytes(stats.storage_used) }}</div>
               <div class="stat-label">已用空间</div>
             </div>
+            <div class="stat-trend">
+              <span class="trend-info">存储中</span>
+            </div>
           </div>
         </el-card>
       </el-col>
       
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #E6A23C">
-              <el-icon :size="30"><View /></el-icon>
+        <el-card shadow="hover" class="stat-card-wrapper">
+          <div class="stat-card gradient-orange">
+            <div class="stat-icon-container">
+              <div class="stat-icon">
+                <el-icon :size="32"><View /></el-icon>
+              </div>
             </div>
             <div class="stat-content">
               <div class="stat-value">{{ stats.total_views }}</div>
               <div class="stat-label">总浏览量</div>
             </div>
+            <div class="stat-trend">
+              <span class="trend-up">↑ 增长</span>
+            </div>
           </div>
         </el-card>
       </el-col>
       
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: #F56C6C">
-              <el-icon :size="30"><User /></el-icon>
+        <el-card shadow="hover" class="stat-card-wrapper">
+          <div class="stat-card gradient-purple">
+            <div class="stat-icon-container">
+              <div class="stat-icon">
+                <el-icon :size="32"><User /></el-icon>
+              </div>
             </div>
             <div class="stat-content">
-              <div class="stat-value">{{ userStore.userInfo?.username }}</div>
+              <div class="stat-value username-value">{{ userStore.userInfo?.username }}</div>
               <div class="stat-label">当前用户</div>
+            </div>
+            <div class="stat-trend">
+              <span class="trend-online">在线</span>
             </div>
           </div>
         </el-card>
@@ -175,50 +202,198 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  padding: 10px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.welcome-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: var(--radius-xl);
+  padding: 40px;
+  margin-bottom: 32px;
+  color: white;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.welcome-content h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.welcome-content p {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.stats-row {
+  margin-bottom: 32px;
+}
+
+.stat-card-wrapper {
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.stat-card-wrapper:hover {
+  transform: translateY(-8px);
+}
+
+.stat-card-wrapper :deep(.el-card__body) {
+  padding: 0;
 }
 
 .stat-card {
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  min-height: 140px;
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  opacity: 0.1;
+  border-radius: 50%;
+}
+
+.gradient-blue {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
+.gradient-green {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+}
+
+.gradient-orange {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+  color: white;
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+  color: white;
+}
+
+.stat-icon-container {
+  margin-bottom: 16px;
+}
+
+.stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
 .stat-content {
-  flex: 1;
+  margin-bottom: 12px;
 }
 
 .stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.username-value {
   font-size: 24px;
-  font-weight: bold;
-  color: #303133;
 }
 
 .stat-label {
   font-size: 14px;
-  color: #909399;
-  margin-top: 5px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+}
+
+.stat-trend span {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.trend-up {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.trend-info {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.trend-online {
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--text-primary);
 }
 
 .quick-actions {
   display: flex;
-  gap: 10px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.quick-actions .el-button {
+  flex: 1;
+  min-width: 140px;
+}
+
+:deep(.el-table) {
+  font-size: 14px;
+}
+
+:deep(.el-table th) {
+  background: var(--bg-color);
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 </style>

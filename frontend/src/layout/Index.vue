@@ -1,16 +1,21 @@
 <template>
   <div class="layout">
     <el-container>
-      <el-aside width="250px">
-        <div class="logo">
-          <h2>🖼️ Gotux</h2>
+      <el-aside width="260px">
+        <div class="logo-container">
+          <Logo :size="48" />
+          <div class="logo-text">
+            <h2>Gotux</h2>
+            <p>图床管理系统</p>
+          </div>
         </div>
         <el-menu
           :default-active="$route.path"
           router
-          background-color="#304156"
-          text-color="#bfcbd9"
-          active-text-color="#409EFF"
+          :background-color="'transparent'"
+          text-color="#e2e8f0"
+          active-text-color="#ffffff"
+          class="custom-menu"
         >
           <el-menu-item index="/dashboard">
             <el-icon><DataAnalysis /></el-icon>
@@ -70,6 +75,7 @@ import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import Logo from '@/components/Logo.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -91,6 +97,7 @@ const handleCommand = (command) => {
 <style scoped>
 .layout {
   height: 100vh;
+  background: var(--bg-color);
 }
 
 .el-container {
@@ -98,32 +105,90 @@ const handleCommand = (command) => {
 }
 
 .el-aside {
-  background-color: #304156;
+  background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
   color: #fff;
   height: 100vh;
   overflow-y: auto;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
-.logo {
-  height: 60px;
+.logo-container {
+  height: 100px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  font-size: 24px;
+  padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
 }
 
-.el-menu {
+.logo-text {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.logo-text h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+
+.logo-text p {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #a0aec0;
+  font-weight: 300;
+}
+
+.custom-menu {
   border: none;
+  padding: 12px 8px;
+}
+
+.custom-menu :deep(.el-menu-item) {
+  margin: 6px 0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.custom-menu :deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.1) !important;
+  transform: translateX(4px);
+}
+
+.custom-menu :deep(.el-menu-item.is-active) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.custom-menu :deep(.el-sub-menu__title) {
+  border-radius: 10px;
+  margin: 6px 0;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.custom-menu :deep(.el-sub-menu__title:hover) {
+  background: rgba(255, 255, 255, 0.1) !important;
 }
 
 .el-header {
-  background-color: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-content {
@@ -135,30 +200,66 @@ const handleCommand = (command) => {
 
 .breadcrumb h3 {
   margin: 0;
-  color: #303133;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .user-dropdown {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: background-color 0.3s;
+  padding: 8px 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
 }
 
 .user-dropdown:hover {
-  background-color: #f5f7fa;
+  background: #fff;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .username {
   font-size: 14px;
-  color: #606266;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 .el-main {
-  background-color: #f5f7fa;
-  padding: 20px;
+  background: var(--bg-color);
+  padding: 24px;
+  overflow-y: auto;
+}
+
+/* 滚动条美化 - 侧边栏 */
+.el-aside::-webkit-scrollbar {
+  width: 6px;
+}
+
+.el-aside::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.el-aside::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.el-aside::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 </style>
