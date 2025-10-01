@@ -26,13 +26,13 @@ func main() {
 	// 创建路由
 	r := gin.Default()
 
-	// 配置 CORS
+	// 配置 CORS - 开发模式允许所有来源
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:3000"},
+		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "X-Image-UUID", "X-Image-ID"},
+		AllowCredentials: false, // AllowAllOrigins 时必须设为 false
 	}))
 
 	// 静态文件服务 - 用于访问上传的图片

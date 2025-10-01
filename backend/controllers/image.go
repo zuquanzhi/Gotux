@@ -520,3 +520,122 @@ func GetStats(c *gin.Context) {
 		"total_views":  totalViews,
 	})
 }
+
+// GetRandomImage 获取随机图片信息(JSON)
+func GetRandomImage(c *gin.Context) {
+	query := models.DB.Where("is_public = ?", true)
+
+	// 支持按用户ID筛选
+	if userID := c.Query("user_id"); userID != "" {
+		query = query.Where("user_id = ?", userID)
+	}
+
+	// 支持按标签筛选
+	if tags := c.Query("tags"); tags != "" {
+		query = query.Where("tags LIKE ?", "%"+tags+"%")
+	}
+
+	// 随机获取一张图片
+	var image models.Image
+	if err := query.Order("RANDOM()").First(&image).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "没有找到符合条件的图片"})
+		return
+	}
+
+	// 加载图片统计信息
+	models.DB.Model(&image).Association("Stats").Find(&image.Stats)
+
+	c.JSON(http.StatusOK, image)
+}
+
+// ServeRandomImage 直接返回随机图片文件(用于图床API)
+func ServeRandomImage(c *gin.Context) {
+	query := models.DB.Where("is_public = ?", true)
+
+	// 支持按用户ID筛选
+	if userID := c.Query("user_id"); userID != "" {
+		query = query.Where("user_id = ?", userID)
+	}
+
+	// 支持按标签筛选
+	if tags := c.Query("tags"); tags != "" {
+		query = query.Where("tags LIKE ?", "%"+tags+"%")
+	}
+
+	// 随机获取一张图片
+	var image models.Image
+	if err := query.Order("RANDOM()").First(&image).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "没有找到符合条件的图片"})
+		return
+	}
+
+	// 增加浏览次数
+	models.IncrementViewCount(image.ID)
+
+	// 构建文件完整路径
+	fullPath := filepath.Join(".", image.FilePath)
+
+	// 检查文件是否存在
+	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "图片文件不存在"})
+		return
+	}
+
+	// 设置响应头
+	c.Header("Content-Type", image.MimeType)
+	c.Header("Cache-Control", "public, max-age=3600")
+	c.Header("X-Image-UUID", image.UUID)
+	c.Header("X-Image-ID", strconv.Itoa(int(image.ID)))
+
+	// 返回图片文件
+	c.File(fullPath)
+}
+
+// RedirectRandomImage 重定向到随机图片(用于外部引用)
+func RedirectRandomImage(c *gin.Context) {
+	query := models.DB.Where("is_public = ?", true)
+
+	// 支持按用户ID筛选
+	if userID := c.Query("user_id"); userID != "" {
+		query = query.Where("user_id = ?", userID)
+	}
+
+	// 支持按标签筛选
+	if tags := c.Query("tags"); tags != "" {
+		query = query.Where("tags LIKE ?", "%"+tags+"%")
+	}
+
+	// 随机获取一张图片
+	var image models.Image
+	if err := query.Order("RANDOM()").First(&image).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "没有找到符合条件的图片"})
+		return
+	}
+
+	// 增加浏览次数
+	models.IncrementViewCount(image.ID)
+
+	// 获取用户设置
+	var user models.User
+	if err := models.DB.First(&user, image.UserID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	// 构建图片URL
+	var baseURL string
+	if user.CustomDomain != "" {
+		baseURL = user.CustomDomain
+	} else {
+		scheme := "http"
+		if c.Request.TLS != nil {
+			scheme = "https"
+		}
+		baseURL = fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+	}
+
+	imageURL := fmt.Sprintf("%s/i/%s", baseURL, image.UUID)
+
+	// 重定向到图片
+	c.Redirect(http.StatusFound, imageURL)
+}

@@ -29,3 +29,16 @@ export function batchDeleteImages(imageIds) {
 export function getImageLinks(id) {
   return request.get(`/images/${id}/links`)
 }
+
+// 随机图片 API (不需要认证)
+export function getRandomImage(params) {
+  // 直接使用 fetch 避免添加 Authorization 头
+  const queryString = new URLSearchParams(params).toString()
+  const url = `/api/random${queryString ? '?' + queryString : ''}`
+  return fetch(url).then(res => res.json())
+}
+
+export function getRandomImageUrl(params) {
+  const queryString = new URLSearchParams(params).toString()
+  return `/api/random/image${queryString ? '?' + queryString : ''}`
+}

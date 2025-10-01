@@ -144,6 +144,63 @@ Content-Type: application/json
 }
 ```
 
+### Random Image API
+
+#### Get Random Image Info (JSON)
+```http
+GET /api/random
+GET /api/random?user_id=1
+GET /api/random?tags=风景
+GET /api/random?user_id=1&tags=风景
+```
+
+Returns random public image information in JSON format.
+
+Response:
+```json
+{
+  "id": 42,
+  "uuid": "550e8400-e29b-41d4-a716-446655440000",
+  "file_name": "sunset.jpg",
+  "original_name": "beautiful_sunset.jpg",
+  "width": 1920,
+  "height": 1080,
+  "file_size": 524288,
+  "mime_type": "image/jpeg",
+  "tags": "风景,日落",
+  "created_at": "2025-01-15T10:30:00Z",
+  "stats": {
+    "view_count": 128
+  }
+}
+```
+
+#### Get Random Image File
+```http
+GET /api/random/image
+GET /api/random/image?user_id=1
+GET /api/random/image?tags=风景
+```
+
+Directly returns random image binary data. Suitable for use in HTML `<img>` tags or as background images.
+
+Response Headers:
+- `Content-Type`: Image MIME type
+- `Cache-Control`: `public, max-age=3600`
+- `X-Image-UUID`: Image UUID
+- `X-Image-ID`: Image database ID
+
+#### Redirect to Random Image
+```http
+GET /api/random/redirect
+GET /api/random/redirect?user_id=1
+GET /api/random/redirect?tags=风景
+```
+
+Returns 302 redirect to permanent image link (`/i/:uuid`).
+
+For detailed usage examples, see [Random API Documentation](./RANDOM_API.md).
+
 ### Images
 
 #### Upload Images

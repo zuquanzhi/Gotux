@@ -44,6 +44,8 @@
             <el-image
               :src="`/uploads/${image.file_path}`"
               :preview-src-list="[`/uploads/${image.file_path}`]"
+              :z-index="9999"
+              :preview-teleported="true"
               fit="cover"
               style="width: 100%; height: 200px; cursor: pointer;"
               @click="viewImage(image)"

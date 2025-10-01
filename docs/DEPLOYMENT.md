@@ -163,15 +163,42 @@ DB_PATH=./gotux.db
 UPLOAD_PATH=./uploads
 ```
 
+## Production CORS Configuration
+
+The default configuration allows all origins (`AllowAllOrigins: true`) for development convenience. For production, you should restrict CORS to specific domains.
+
+Edit `backend/main.go`:
+
+```go
+// Production CORS configuration
+r.Use(cors.New(cors.Config{
+    AllowOrigins:     []string{
+        "https://yourdomain.com",
+        "https://www.yourdomain.com",
+    },
+    AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+    AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+    ExposeHeaders:    []string{"Content-Length", "X-Image-UUID", "X-Image-ID"},
+    AllowCredentials: true,
+}))
+```
+
+**Important Notes**:
+- Use HTTPS in production (not HTTP)
+- List all domains that will access your API
+- Set `AllowCredentials: true` if you need cookie support
+- Don't use `AllowAllOrigins: true` in production
+
 ## Security Best Practices
 
 1. **Change Default Credentials**: Update admin password immediately
 2. **Use Strong JWT Secret**: Generate a random 32+ character secret
 3. **Enable HTTPS**: Always use SSL/TLS in production
 4. **Configure Firewall**: Only expose necessary ports (80, 443)
-5. **Regular Backups**: Backup database and uploads directory
-6. **Update Regularly**: Keep dependencies and system packages updated
-7. **Monitor Logs**: Review access and error logs regularly
+5. **Configure CORS**: Restrict allowed origins to your domains only
+6. **Regular Backups**: Backup database and uploads directory
+7. **Update Regularly**: Keep dependencies and system packages updated
+8. **Monitor Logs**: Review access and error logs regularly
 
 ## CDN Integration
 

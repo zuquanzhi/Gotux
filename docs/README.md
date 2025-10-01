@@ -11,6 +11,7 @@
 ## API Reference
 
 - [API Documentation](./API.md) - Complete API reference with examples
+- [Random Image API](./RANDOM_API.md) - Random image endpoints usage guide
 
 ## Changelog
 

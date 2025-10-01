@@ -21,6 +21,11 @@ func SetupRoutes(r *gin.Engine) {
 		// 公开访问图片信息(通过UUID)
 		api.GET("/i/:uuid", controllers.GetImageByUUID)
 
+		// 随机图片 API
+		api.GET("/random", controllers.GetRandomImage)           // 返回JSON
+		api.GET("/random/image", controllers.ServeRandomImage)   // 直接返回图片
+		api.GET("/random/redirect", controllers.RedirectRandomImage) // 重定向到图片
+
 		// 需要认证的路由
 		authorized := api.Group("")
 		authorized.Use(middleware.AuthMiddleware())

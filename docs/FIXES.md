@@ -1,5 +1,61 @@
 # Bug Fixes and Improvements Summary
 
+## Date: 2025-10-02 (Update 3)
+
+### Bug Fixes
+
+#### 6. CORS 403 Error for IPv6 Requests
+**Issue**: When accessing `/api/random` from browsers using IPv6 (`::1`), requests returned 403 Forbidden errors. However, IPv4 (`127.0.0.1`) requests worked fine.
+
+**Root Cause**: The CORS configuration only explicitly allowed specific origins like `http://localhost:5173`, but browsers using IPv6 send Origin header as `http://[::1]:5173`, which wasn't in the allowed list.
+
+**Attempts**:
+1. Added IPv6 localhost variations to `AllowOrigins`
+2. Used `AllowOriginFunc` to dynamically check origins
+
+**Final Solution**: For development mode, simplified to `AllowAllOrigins: true`:
+
+```go
+r.Use(cors.New(cors.Config{
+    AllowAllOrigins:  true,  // Development mode
+    AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+    AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+    ExposeHeaders:    []string{"Content-Length", "X-Image-UUID", "X-Image-ID"},
+    AllowCredentials: false, // Must be false when AllowAllOrigins is true
+}))
+```
+
+**Note**: For production deployment, use specific origins in `AllowOrigins` array.
+
+Location: `backend/main.go`
+
+## Date: 2025-10-02 (Update 2)
+
+### Bug Fixes
+
+#### 4. Admin Images Page Preview Overlap
+**Issue**: In the admin images management page, when viewing large images, UI elements were overlapping the preview modal (same issue as dashboard).
+
+**Fix**: Added `z-index="9999"` and `preview-teleported="true"` props to `el-image` component.
+
+Locations:
+- `frontend/src/views/admin/Images.vue`
+- `frontend/src/views/Upload.vue`
+- `frontend/src/views/Images.vue`
+
+#### 5. Random API Authentication Issue
+**Issue**: When calling `/api/random` from frontend Vue app, the request utility automatically added Authorization header even when empty, which could cause 403 errors.
+
+**Fix**: Created dedicated random image API functions in `frontend/src/api/image.js` that use native `fetch` to avoid adding Authorization header.
+
+```javascript
+export function getRandomImage(params) {
+  const queryString = new URLSearchParams(params).toString()
+  const url = `/api/random${queryString ? '?' + queryString : ''}`
+  return fetch(url).then(res => res.json())
+}
+```
+
 ## Date: 2025-01-02
 
 ### Bug Fixes

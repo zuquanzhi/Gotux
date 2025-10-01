@@ -6,6 +6,7 @@ A modern self-hosted image hosting solution built with Go and Vue.js.
 
 - Drag-and-drop image upload with batch support
 - **Secure UUID-based image links** to prevent enumeration attacks
+- **Random Image API** with filter support (tags, user_id)
 - Multiple export formats: URL, Markdown, HTML, BBCode
 - Custom domain support for image links
 - Image compression with adjustable quality
@@ -175,6 +176,7 @@ GET    /api/admin/stats        # System statistics
 
 - [Deployment Guide](./docs/DEPLOYMENT.md) - Production deployment with Docker, Nginx, SSL
 - [API Reference](./docs/API.md) - Complete API documentation
+- [Random Image API](./docs/RANDOM_API.md) - Random image endpoints usage guide
 - [Changelog](./docs/CHANGELOG.md) - Version history
 
 ## Database Migration

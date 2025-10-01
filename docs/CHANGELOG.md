@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2025-10-02
+
+### Added
+- **Random Image API**: Three new endpoints for accessing random images
+  - `/api/random` - Returns random image information in JSON format
+  - `/api/random/image` - Directly returns random image file
+  - `/api/random/redirect` - Redirects to random image permanent link
+- Support for filtering by `user_id` and `tags` parameters
+- Automatic view count tracking for random image access
+- Custom domain support in random image redirects
+- Comprehensive Random API documentation (`docs/RANDOM_API.md`)
+- Interactive demo page (`docs/random-demo.html`)
+
+### Features
+- Random image selection using SQLite's RANDOM() function
+- Public image privacy filtering (only `is_public = true`)
+- HTTP cache headers for better performance
+- Response headers with image UUID and ID information
+
+### Documentation
+- Added detailed Random API usage guide
+- Created visual demo page with filtering controls
+- Updated API reference with random endpoints
+- Added usage examples for various scenarios
+
+### Use Cases
+- Website random backgrounds
+- Placeholder image service
+- Image carousel effects
+- API integration for external services
+- Social media card images
+
 ## [2.1.0] - 2025-01-02
 
 ### Changed

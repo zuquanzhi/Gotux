@@ -14,6 +14,8 @@
             <el-image
               :src="`/uploads/${row.file_path}`"
               :preview-src-list="[`/uploads/${row.file_path}`]"
+              :z-index="9999"
+              :preview-teleported="true"
               fit="cover"
               style="width: 60px; height: 60px; border-radius: 4px;"
             />

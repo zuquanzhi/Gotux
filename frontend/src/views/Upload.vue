@@ -61,6 +61,8 @@
                   fit="cover"
                   style="width: 100%; height: 200px;"
                   :preview-src-list="[`/uploads/${image.file_path}`]"
+                  :z-index="9999"
+                  :preview-teleported="true"
                 />
                 <div class="result-image-info">
                   <div class="image-name">{{ image.original_name }}</div>
