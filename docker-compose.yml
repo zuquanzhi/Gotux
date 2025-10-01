@@ -1,0 +1,28 @@
+# Docker Compose 配置文件
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/gotux.db:/app/gotux.db
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_MODE=release
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key-change-in-production}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
