@@ -19,7 +19,22 @@ type User struct {
 	Role      string         `gorm:"default:'user'" json:"role"` // admin, user
 	Avatar    string         `json:"avatar"`
 	Status    string         `gorm:"default:'active'" json:"status"` // active, disabled
-	Images    []Image        `gorm:"foreignKey:UserID" json:"images,omitempty"`
+
+	// 用户设置
+	CustomDomain      string `json:"custom_domain"`                                              // 自定义域名
+	DefaultLinkFormat string `gorm:"default:'url'" json:"default_link_format"`                   // url, markdown, html, bbcode
+	EnableWatermark   bool   `gorm:"default:false" json:"enable_watermark"`                      // 是否启用水印
+	WatermarkText     string `json:"watermark_text"`                                             // 水印文字
+	WatermarkPosition string `gorm:"default:'bottom-right'" json:"watermark_position"`           // 水印位置
+	CompressImage     bool   `gorm:"default:false" json:"compress_image"`                        // 是否压缩图片
+	CompressQuality   int    `gorm:"default:80" json:"compress_quality"`                         // 压缩质量 (1-100)
+	MaxImageSize      int64  `gorm:"default:10485760" json:"max_image_size"`                     // 最大图片大小 (字节)
+	AllowedImageTypes string `gorm:"default:'jpg,jpeg,png,gif,webp'" json:"allowed_image_types"` // 允许的图片类型
+	EnableImageReview bool   `gorm:"default:false" json:"enable_image_review"`                   // 图片审核
+	StorageQuota      int64  `gorm:"default:1073741824" json:"storage_quota"`                    // 存储配额 (字节，默认1GB)
+	UsedStorage       int64  `gorm:"default:0" json:"used_storage"`                              // 已使用存储
+
+	Images []Image `gorm:"foreignKey:UserID" json:"images,omitempty"`
 }
 
 // HashPassword 加密密码

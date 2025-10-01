@@ -141,6 +141,109 @@ func UpdateProfile(c *gin.Context) {
 	})
 }
 
+// UpdateSettings 更新用户设置
+func UpdateSettings(c *gin.Context) {
+	user, exists := middleware.GetUser(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
+	var req struct {
+		CustomDomain      string `json:"custom_domain"`
+		DefaultLinkFormat string `json:"default_link_format"`
+		EnableWatermark   *bool  `json:"enable_watermark"`
+		WatermarkText     string `json:"watermark_text"`
+		WatermarkPosition string `json:"watermark_position"`
+		CompressImage     *bool  `json:"compress_image"`
+		CompressQuality   *int   `json:"compress_quality"`
+		MaxImageSize      *int64 `json:"max_image_size"`
+		AllowedImageTypes string `json:"allowed_image_types"`
+		EnableImageReview *bool  `json:"enable_image_review"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		return
+	}
+
+	// 更新设置
+	if req.CustomDomain != "" {
+		user.CustomDomain = req.CustomDomain
+	}
+	if req.DefaultLinkFormat != "" {
+		user.DefaultLinkFormat = req.DefaultLinkFormat
+	}
+	if req.EnableWatermark != nil {
+		user.EnableWatermark = *req.EnableWatermark
+	}
+	if req.WatermarkText != "" {
+		user.WatermarkText = req.WatermarkText
+	}
+	if req.WatermarkPosition != "" {
+		user.WatermarkPosition = req.WatermarkPosition
+	}
+	if req.CompressImage != nil {
+		user.CompressImage = *req.CompressImage
+	}
+	if req.CompressQuality != nil {
+		if *req.CompressQuality < 1 || *req.CompressQuality > 100 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "压缩质量必须在 1-100 之间"})
+			return
+		}
+		user.CompressQuality = *req.CompressQuality
+	}
+	if req.MaxImageSize != nil {
+		if *req.MaxImageSize < 0 || *req.MaxImageSize > 52428800 { // 最大 50MB
+			c.JSON(http.StatusBadRequest, gin.H{"error": "图片大小限制必须在 0-50MB 之间"})
+			return
+		}
+		user.MaxImageSize = *req.MaxImageSize
+	}
+	if req.AllowedImageTypes != "" {
+		user.AllowedImageTypes = req.AllowedImageTypes
+	}
+	if req.EnableImageReview != nil {
+		user.EnableImageReview = *req.EnableImageReview
+	}
+
+	if err := user.Update(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新设置失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "设置更新成功",
+		"user":    user,
+	})
+}
+
+// GetSettings 获取用户设置
+func GetSettings(c *gin.Context) {
+	user, exists := middleware.GetUser(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"settings": gin.H{
+			"custom_domain":       user.CustomDomain,
+			"default_link_format": user.DefaultLinkFormat,
+			"enable_watermark":    user.EnableWatermark,
+			"watermark_text":      user.WatermarkText,
+			"watermark_position":  user.WatermarkPosition,
+			"compress_image":      user.CompressImage,
+			"compress_quality":    user.CompressQuality,
+			"max_image_size":      user.MaxImageSize,
+			"allowed_image_types": user.AllowedImageTypes,
+			"enable_image_review": user.EnableImageReview,
+			"storage_quota":       user.StorageQuota,
+			"used_storage":        user.UsedStorage,
+		},
+	})
+}
+
 // ChangePassword 修改密码
 func ChangePassword(c *gin.Context) {
 	user, exists := middleware.GetUser(c)

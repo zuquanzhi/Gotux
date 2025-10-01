@@ -3,11 +3,13 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Image struct {
 	ID           uint           `gorm:"primarykey" json:"id"`
+	UUID         string         `gorm:"uniqueIndex" json:"uuid"` // 不使用 not null,由代码保证
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
@@ -27,6 +29,14 @@ type Image struct {
 	Stats        *ImageStats    `gorm:"foreignKey:ImageID" json:"stats,omitempty"`
 }
 
+// BeforeCreate hook to generate UUID
+func (img *Image) BeforeCreate(tx *gorm.DB) error {
+	if img.UUID == "" {
+		img.UUID = uuid.New().String()
+	}
+	return nil
+}
+
 type ImageStats struct {
 	ID        uint      `gorm:"primarykey" json:"id"`
 	ImageID   uint      `gorm:"uniqueIndex;not null" json:"image_id"`
@@ -43,6 +53,15 @@ func CreateImage(image *Image) error {
 func GetImageByID(id uint) (*Image, error) {
 	var image Image
 	if err := DB.Preload("User").Preload("Stats").First(&image, id).Error; err != nil {
+		return nil, err
+	}
+	return &image, nil
+}
+
+// GetImageByUUID 根据UUID获取图片
+func GetImageByUUID(uuid string) (*Image, error) {
+	var image Image
+	if err := DB.Preload("User").Preload("Stats").Where("uuid = ?", uuid).First(&image).Error; err != nil {
 		return nil, err
 	}
 	return &image, nil

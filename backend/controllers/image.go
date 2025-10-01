@@ -356,23 +356,46 @@ func GetImageLinks(c *gin.Context) {
 		return
 	}
 
+	userID, exists := middleware.GetUserID(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未授权"})
+		return
+	}
+
 	image, err := models.GetImageByID(uint(imageID))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "图片不存在"})
 		return
 	}
 
-	// 构建完整URL
-	baseURL := c.Request.Host
-	scheme := "http"
-	if c.Request.TLS != nil {
-		scheme = "https"
+	// 获取用户设置
+	user, err := models.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户设置失败"})
+		return
 	}
-	imageURL := fmt.Sprintf("%s://%s/uploads/%s", scheme, baseURL, image.FilePath)
+
+	// 构建完整URL - 使用自定义域名或默认域名
+	var baseURL string
+	if user.CustomDomain != "" {
+		baseURL = user.CustomDomain
+	} else {
+		scheme := "http"
+		if c.Request.TLS != nil {
+			scheme = "https"
+		}
+		baseURL = fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+	}
+	
+	// 使用UUID生成安全链接
+	imageURL := fmt.Sprintf("%s/i/%s", baseURL, image.UUID)
+	// 兼容旧的直接路径访问
+	directURL := fmt.Sprintf("%s/uploads/%s", baseURL, image.FilePath)
 
 	// 生成各种格式的链接
 	links := map[string]string{
 		"url":                imageURL,
+		"direct_url":         directURL,
 		"html":               fmt.Sprintf(`<img src="%s" alt="%s" />`, imageURL, image.OriginalName),
 		"markdown":           fmt.Sprintf(`![%s](%s)`, image.OriginalName, imageURL),
 		"bbcode":             fmt.Sprintf(`[img]%s[/img]`, imageURL),
@@ -383,6 +406,69 @@ func GetImageLinks(c *gin.Context) {
 		"image": image,
 		"links": links,
 	})
+}
+
+// GetImageByUUID 通过UUID获取图片信息
+func GetImageByUUID(c *gin.Context) {
+	uuid := c.Param("uuid")
+	
+	image, err := models.GetImageByUUID(uuid)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "图片不存在"})
+		return
+	}
+
+	// 增加浏览量
+	if image.Stats != nil {
+		image.Stats.ViewCount++
+		models.DB.Save(image.Stats)
+	} else {
+		stats := &models.ImageStats{
+			ImageID:   image.ID,
+			ViewCount: 1,
+		}
+		models.DB.Create(stats)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"image": image,
+	})
+}
+
+// ServeImageByUUID 通过UUID提供图片文件
+func ServeImageByUUID(c *gin.Context) {
+	uuid := c.Param("uuid")
+	
+	image, err := models.GetImageByUUID(uuid)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "图片不存在"})
+		return
+	}
+
+	// 检查图片是否公开或者是否为图片所有者
+	if !image.IsPublic {
+		userID, exists := middleware.GetUserID(c)
+		if !exists || userID != image.UserID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "无权访问此图片"})
+			return
+		}
+	}
+
+	// 增加浏览量
+	if image.Stats != nil {
+		image.Stats.ViewCount++
+		models.DB.Save(image.Stats)
+	} else {
+		stats := &models.ImageStats{
+			ImageID:   image.ID,
+			ViewCount: 1,
+		}
+		models.DB.Create(stats)
+	}
+
+	// 提供文件
+	filePath := fmt.Sprintf("uploads/%s", image.FilePath)
+	c.File(filePath)
 }
 
 // 辅助函数

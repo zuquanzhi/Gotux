@@ -18,6 +18,9 @@ func SetupRoutes(r *gin.Engine) {
 			auth.POST("/login", controllers.Login)
 		}
 
+		// 公开访问图片信息(通过UUID)
+		api.GET("/i/:uuid", controllers.GetImageByUUID)
+
 		// 需要认证的路由
 		authorized := api.Group("")
 		authorized.Use(middleware.AuthMiddleware())
@@ -29,6 +32,8 @@ func SetupRoutes(r *gin.Engine) {
 				user.PUT("/profile", controllers.UpdateProfile)
 				user.POST("/change-password", controllers.ChangePassword)
 				user.GET("/stats", controllers.GetStats)
+				user.GET("/settings", controllers.GetSettings)
+				user.PUT("/settings", controllers.UpdateSettings)
 			}
 
 			// 图片相关
@@ -54,6 +59,9 @@ func SetupRoutes(r *gin.Engine) {
 			}
 		}
 	}
+
+	// 直接提供图片文件(通过UUID)
+	r.GET("/i/:uuid", controllers.ServeImageByUUID)
 
 	// 健康检查
 	r.GET("/health", func(c *gin.Context) {

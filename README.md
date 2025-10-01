@@ -1,201 +1,258 @@
-# Gotux - 图床管理系统
+# Gotux
 
-一个基于 Golang + Vue 的现代化图床管理系统，支持图片上传、管理、链接导出等功能。
+A modern self-hosted image hosting solution built with Go and Vue.js.
 
-## ✨ 功能特性
+## Features
 
-### 核心功能
-- 🖼️ **图片上传**：支持拖拽上传、批量上传、多种图片格式
-- 📁 **图片管理**：查看、编辑、删除、搜索图片
-- 🔗 **链接导出**：支持 URL、Markdown、HTML、BBCode 等多种格式
-- 📊 **数据统计**：图片数量、存储空间、访问量统计
-- 🔍 **图片搜索**：按文件名、描述、标签搜索
+- Drag-and-drop image upload with batch support
+- **Secure UUID-based image links** to prevent enumeration attacks
+- Multiple export formats: URL, Markdown, HTML, BBCode
+- Custom domain support for image links
+- Image compression with adjustable quality
+- Watermark support with custom text and position
+- User authentication and role-based access control
+- Storage quota management
+- View count tracking
+- Admin dashboard for user and image management
+- MD5-based deduplication
+- Responsive UI design
 
-### 用户系统
-- 👤 **用户注册/登录**：支持邮箱注册
-- 🔐 **JWT 认证**：安全的身份验证机制
-- 👥 **用户管理**：修改个人信息、修改密码
-- 🎯 **权限控制**：普通用户和管理员角色
+## Quick Start
 
-### 管理功能
-- 🛠️ **用户管理**：管理员可以查看所有用户、禁用/激活用户
-- 📷 **图片管理**：管理员可以查看和管理所有图片
-- 📈 **系统统计**：用户数、图片数、存储使用情况
+### Requirements
 
-### 技术特性
-- ⚡ **高性能**：Golang 后端，Vue 3 前端
-- 🗄️ **数据持久化**：SQLite 数据库
-- 🔄 **图片去重**：基于 MD5 哈希的自动去重
-- 📦 **文件组织**：按日期自动组织存储
-- 🎨 **现代化 UI**：Element Plus 组件库
-- 📱 **响应式设计**：支持各种屏幕尺寸
+- Go 1.21 or higher
+- Node.js 18 or higher
 
-## 🚀 快速开始
+### Installation
 
-### 系统要求
-
-- Go 1.21+
-- Node.js 18+
-- npm 或 yarn
-
-### 后端部署
+Clone the repository:
 
 ```bash
+git clone https://github.com/zuquanzhi/Gotux.git
+cd Gotux
+```
+
+Start with Docker Compose (recommended):
+
+```bash
+docker-compose up -d
+```
+
+Or start manually:
+
+```bash
+# Backend
 cd backend
-
-# 安装依赖
 go mod download
+go run main.go
 
-# 复制配置文件
-cp .env.example .env
+# Frontend (in a new terminal)
+cd frontend
+npm install
+npm run dev
+```
 
-# 编辑 .env 文件，修改配置（可选）
+Access the application:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8080
 
-# 运行服务
+### Default Admin Account
+
+```
+Username: admin
+Password: admin123
+```
+
+**Important:** Change the default password after first login.
+
+## Configuration
+
+### Backend Configuration
+
+Create a `.env` file in the `backend` directory:
+
+```env
+SERVER_PORT=8080
+SERVER_MODE=release
+JWT_SECRET=your-secret-key-change-in-production
+```
+
+### Frontend Configuration
+
+API endpoint is configured in `frontend/vite.config.js`. Update the proxy settings if needed.
+
+## User Settings
+
+Users can customize their experience through the profile settings:
+
+- **Custom Domain**: Use your own domain for image links
+- **Link Format**: Default format for copied links (URL/Markdown/HTML/BBCode)
+- **Image Compression**: Automatic compression with quality control (1-100)
+- **Watermark**: Add text watermark with customizable position
+- **Upload Limits**: File size and format restrictions
+- **Storage Quota**: Monitor storage usage
+
+## Tech Stack
+
+**Backend**
+- Go 1.21
+- Gin Web Framework
+- GORM (SQLite)
+- JWT Authentication
+
+**Frontend**
+- Vue 3
+- Vite
+- Element Plus
+- Pinia
+- Axios
+
+## Project Structure
+
+```
+.
+├── backend/
+│   ├── config/         # Configuration
+│   ├── controllers/    # Request handlers
+│   ├── middleware/     # Middleware (auth, etc.)
+│   ├── models/         # Data models
+│   ├── routes/         # API routes
+│   └── main.go         # Entry point
+├── frontend/
+│   └── src/
+│       ├── api/        # API clients
+│       ├── components/ # Vue components
+│       ├── router/     # Vue Router
+│       ├── stores/     # Pinia stores
+│       ├── views/      # Page components
+│       └── main.js     # Entry point
+└── docker-compose.yml
+```
+
+## API Reference
+
+### Authentication
+
+```
+POST /api/register      # Register new user
+POST /api/login         # User login
+```
+
+### Images
+
+```
+GET    /api/images           # List images (paginated)
+POST   /api/images/upload    # Upload images
+GET    /api/images/:id       # Get image details
+DELETE /api/images/:id       # Delete image
+GET    /api/images/:id/links # Get image links in various formats
+```
+
+### User
+
+```
+GET  /api/user/profile     # Get user profile
+PUT  /api/user/profile     # Update profile
+PUT  /api/user/password    # Change password
+GET  /api/user/stats       # Get user statistics
+GET  /api/user/settings    # Get user settings
+PUT  /api/user/settings    # Update user settings
+```
+
+### Admin (requires admin role)
+
+```
+GET    /api/admin/users        # List all users
+PUT    /api/admin/users/:id    # Update user
+DELETE /api/admin/users/:id    # Delete user
+GET    /api/admin/images       # List all images
+DELETE /api/admin/images/:id   # Delete any image
+GET    /api/admin/stats        # System statistics
+```
+
+## Documentation
+
+- [Deployment Guide](./docs/DEPLOYMENT.md) - Production deployment with Docker, Nginx, SSL
+- [API Reference](./docs/API.md) - Complete API documentation
+- [Changelog](./docs/CHANGELOG.md) - Version history
+
+## Database Migration
+
+If you're upgrading from a previous version, run the UUID migration:
+
+```bash
+cd backend/cmd/migrate_uuid
 go run main.go
 ```
 
-后端服务将在 `http://localhost:8080` 启动
+This adds UUID support to all existing images for secure access.
 
-### 前端部署
+## Deployment
+
+See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for production deployment instructions including:
+
+- Docker deployment
+- Nginx/Caddy reverse proxy configuration
+- SSL certificate setup with Let's Encrypt
+- Custom domain configuration
+- CDN integration
+
+## Development
+
+### Backend
+
+```bash
+cd backend
+go run main.go
+```
+
+### Frontend
 
 ```bash
 cd frontend
-
-# 安装依赖
-npm install
-
-# 开发模式
 npm run dev
-
-# 生产构建
-npm run build
 ```
 
-前端开发服务器将在 `http://localhost:5173` 启动
-
-### 默认管理员账户
-
-- 用户名: `admin`
-- 密码: `admin123`
-
-**⚠️ 请在首次登录后立即修改默认密码！**
-
-## 📁 项目结构
-
-```
-Gotux/
-├── backend/                 # 后端代码
-│   ├── config/             # 配置
-│   ├── controllers/        # 控制器
-│   ├── middleware/         # 中间件
-│   ├── models/             # 数据模型
-│   ├── routes/             # 路由
-│   ├── main.go            # 入口文件
-│   └── go.mod             # Go 依赖
-├── frontend/               # 前端代码
-│   ├── src/
-│   │   ├── api/           # API 接口
-│   │   ├── components/    # 组件
-│   │   ├── layout/        # 布局
-│   │   ├── router/        # 路由
-│   │   ├── stores/        # 状态管理
-│   │   ├── utils/         # 工具函数
-│   │   └── views/         # 页面
-│   ├── package.json       # Node 依赖
-│   └── vite.config.js     # Vite 配置
-└── README.md              # 项目说明
-```
-
-## 🔧 配置说明
-
-### 后端配置 (.env)
-
-```env
-SERVER_PORT=8080                                    # 服务端口
-SERVER_MODE=release                                 # 运行模式
-JWT_SECRET=your-secret-key-change-in-production    # JWT 密钥
-```
-
-### 前端配置 (vite.config.js)
-
-代理配置已设置好，开发模式下自动代理到后端服务。
-
-## 📸 功能截图
-
-### 用户界面
-- 登录/注册页面
-- 仪表盘（数据统计）
-- 图片上传页面
-- 图片管理页面
-- 个人中心
-
-### 管理员界面
-- 用户管理
-- 系统图片管理
-- 系统统计
-
-## 🌐 API 文档
-
-详细的 API 文档请查看 [backend/README.md](backend/README.md)
-
-### 主要 API 端点
-
-- `POST /api/auth/register` - 用户注册
-- `POST /api/auth/login` - 用户登录
-- `POST /api/images/upload` - 上传图片
-- `GET /api/images` - 获取图片列表
-- `GET /api/images/:id/links` - 获取图片链接
-- `DELETE /api/images/:id` - 删除图片
-- `GET /api/user/profile` - 获取个人信息
-- `GET /api/admin/stats` - 系统统计（管理员）
-
-## 🚀 生产部署
-
-### 使用 Docker
+### Database Migration
 
 ```bash
-# 构建并启动所有服务
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 停止服务
-docker-compose down
+cd backend/cmd/migrate
+go run main.go
 ```
 
-### Nginx 配置
+## Contributing
 
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    
-    # 前端
-    root /var/www/gotux/frontend/dist;
-    index index.html;
-    
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-    
-    # 后端 API
-    location /api {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-    
-    # 图片文件
-    location /uploads {
-        proxy_pass http://localhost:8080;
-    }
-}
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 🛠️ 开发指南
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see the LICENSE file for details
+
+## Acknowledgments
+
+- [Gin](https://github.com/gin-gonic/gin) - HTTP web framework
+- [GORM](https://gorm.io/) - ORM library
+- [Vue.js](https://vuejs.org/) - Progressive JavaScript framework
+- [Element Plus](https://element-plus.org/) - Vue 3 UI library
+- [Vite](https://vitejs.dev/) - Build tool
+
+## � 文档
+
+- [功能更新日志](./CHANGELOG.md) - 版本更新历史
+- [个人设置指南](./SETTINGS_GUIDE.md) - 详细的设置功能说明
+- [域名绑定配置指南](./DOMAIN_BINDING_GUIDE.md) - 如何绑定自己的域名
+- [设置快速参考](./SETTINGS_QUICKREF.md) - 快速查询设置选项
+- [UI 极简化说明](./UI_MINIMALISM.md) - 界面设计理念
+- [部署说明](./DEPLOY.md) - 生产环境部署指南
+
+## �🛠️ 开发指南
 
 ### 后端开发
 

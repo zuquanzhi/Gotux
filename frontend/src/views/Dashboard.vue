@@ -1,114 +1,20 @@
 <template>
   <div class="dashboard">
-    <div class="welcome-banner">
-      <div class="welcome-content">
-        <h1>欢迎回来, {{ userStore.userInfo?.username }}! 👋</h1>
-        <p>让我们开始管理您的图片资源</p>
+    <!-- 统计概览 -->
+    <div class="stats-overview">
+      <div class="stat-card" v-for="(stat, index) in statsData" :key="index">
+        <div class="stat-icon" :class="`icon-${stat.color}`">
+          <component :is="stat.icon" />
+        </div>
+        <div class="stat-info">
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
+        </div>
       </div>
     </div>
-
-    <el-row :gutter="24" class="stats-row">
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card-wrapper">
-          <div class="stat-card gradient-blue">
-            <div class="stat-icon-container">
-              <div class="stat-icon">
-                <el-icon :size="32"><Picture /></el-icon>
-              </div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ stats.image_count }}</div>
-              <div class="stat-label">图片总数</div>
-            </div>
-            <div class="stat-trend">
-              <span class="trend-up">↑ 活跃</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card-wrapper">
-          <div class="stat-card gradient-green">
-            <div class="stat-icon-container">
-              <div class="stat-icon">
-                <el-icon :size="32"><FolderOpened /></el-icon>
-              </div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ formatBytes(stats.storage_used) }}</div>
-              <div class="stat-label">已用空间</div>
-            </div>
-            <div class="stat-trend">
-              <span class="trend-info">存储中</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card-wrapper">
-          <div class="stat-card gradient-orange">
-            <div class="stat-icon-container">
-              <div class="stat-icon">
-                <el-icon :size="32"><View /></el-icon>
-              </div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ stats.total_views }}</div>
-              <div class="stat-label">总浏览量</div>
-            </div>
-            <div class="stat-trend">
-              <span class="trend-up">↑ 增长</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-      
-      <el-col :span="6">
-        <el-card shadow="hover" class="stat-card-wrapper">
-          <div class="stat-card gradient-purple">
-            <div class="stat-icon-container">
-              <div class="stat-icon">
-                <el-icon :size="32"><User /></el-icon>
-              </div>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value username-value">{{ userStore.userInfo?.username }}</div>
-              <div class="stat-label">当前用户</div>
-            </div>
-            <div class="stat-trend">
-              <span class="trend-online">在线</span>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
     
-    <el-row :gutter="20" style="margin-top: 20px">
-      <el-col :span="24">
-        <el-card>
-          <template #header>
-            <div class="card-header">
-              <span>快速操作</span>
-            </div>
-          </template>
-          <div class="quick-actions">
-            <el-button type="primary" :icon="Upload" @click="goToUpload">
-              上传图片
-            </el-button>
-            <el-button type="success" :icon="Picture" @click="goToImages">
-              查看图片
-            </el-button>
-            <el-button type="info" :icon="User" @click="goToProfile">
-              个人中心
-            </el-button>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-    
-    <el-row :gutter="20" style="margin-top: 20px">
+    <!-- 最近上传 -->
+    <el-row :gutter="20" style="margin-top: 32px">
       <el-col :span="24">
         <el-card>
           <template #header>
@@ -123,6 +29,8 @@
                 <el-image
                   :src="`/uploads/${row.file_path}`"
                   :preview-src-list="[`/uploads/${row.file_path}`]"
+                  :z-index="9999"
+                  :preview-teleported="true"
                   fit="cover"
                   style="width: 60px; height: 60px; border-radius: 4px;"
                 />
@@ -146,12 +54,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getStats } from '@/api/auth'
 import { getImages } from '@/api/image'
-import { Upload, Picture, User, View, FolderOpened } from '@element-plus/icons-vue'
+import { Picture, FolderOpened, View, Calendar } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -162,6 +70,33 @@ const stats = ref({
 })
 const recentImages = ref([])
 const loading = ref(false)
+
+const statsData = computed(() => [
+  {
+    icon: Picture,
+    value: stats.value.image_count,
+    label: '图片总数',
+    color: 'blue'
+  },
+  {
+    icon: FolderOpened,
+    value: formatBytes(stats.value.storage_used),
+    label: '存储空间',
+    color: 'green'
+  },
+  {
+    icon: View,
+    value: stats.value.total_views,
+    label: '总浏览量',
+    color: 'purple'
+  },
+  {
+    icon: Calendar,
+    value: recentImages.value.length,
+    label: '最近上传',
+    color: 'orange'
+  }
+])
 
 const formatBytes = (bytes) => {
   if (bytes === 0) return '0 B'
@@ -174,10 +109,6 @@ const formatBytes = (bytes) => {
 const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-CN')
 }
-
-const goToUpload = () => router.push('/upload')
-const goToImages = () => router.push('/images')
-const goToProfile = () => router.push('/profile')
 
 const fetchData = async () => {
   try {
@@ -202,169 +133,83 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  max-width: 1400px;
-  margin: 0 auto;
+  animation: fadeInUp 0.5s ease;
 }
 
-.welcome-banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: var(--radius-xl);
-  padding: 40px;
+/* 统计概览 */
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
   margin-bottom: 32px;
-  color: white;
-  box-shadow: var(--shadow-xl);
-  position: relative;
-  overflow: hidden;
-}
-
-.welcome-banner::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-  border-radius: 50%;
-}
-
-.welcome-content h1 {
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  position: relative;
-  z-index: 1;
-}
-
-.welcome-content p {
-  font-size: 16px;
-  opacity: 0.9;
-  margin: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.stats-row {
-  margin-bottom: 32px;
-}
-
-.stat-card-wrapper {
-  transition: all 0.3s ease;
-  height: 100%;
-}
-
-.stat-card-wrapper:hover {
-  transform: translateY(-8px);
-}
-
-.stat-card-wrapper :deep(.el-card__body) {
-  padding: 0;
 }
 
 .stat-card {
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  min-height: 140px;
+  padding: 24px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+  cursor: default;
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 100px;
-  height: 100px;
-  opacity: 0.1;
-  border-radius: 50%;
-}
-
-.gradient-blue {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.gradient-green {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  color: white;
-}
-
-.gradient-orange {
-  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
-  color: white;
-}
-
-.gradient-purple {
-  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
-  color: white;
-}
-
-.stat-icon-container {
-  margin-bottom: 16px;
+.stat-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .stat-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   width: 56px;
   height: 56px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
-.stat-content {
-  margin-bottom: 12px;
+.stat-icon.icon-blue {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #667eea;
+}
+
+.stat-icon.icon-green {
+  background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.1) 100%);
+  color: #48bb78;
+}
+
+.stat-icon.icon-purple {
+  background: linear-gradient(135deg, rgba(159, 122, 234, 0.1) 0%, rgba(128, 90, 213, 0.1) 100%);
+  color: #9f7aea;
+}
+
+.stat-icon.icon-orange {
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.1) 100%);
+  color: #ed8936;
+}
+
+.stat-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .stat-value {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 4px;
   line-height: 1.2;
 }
 
-.username-value {
-  font-size: 24px;
-}
-
 .stat-label {
-  font-size: 14px;
-  opacity: 0.9;
+  font-size: 13px;
+  color: var(--text-tertiary);
   font-weight: 500;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-}
-
-.stat-trend span {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-.trend-up {
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.trend-info {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.trend-online {
-  color: rgba(255, 255, 255, 0.95);
 }
 
 .card-header {
@@ -376,24 +221,58 @@ onMounted(() => {
   color: var(--text-primary);
 }
 
-.quick-actions {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.quick-actions .el-button {
-  flex: 1;
-  min-width: 140px;
-}
-
 :deep(.el-table) {
   font-size: 14px;
 }
 
 :deep(.el-table th) {
-  background: var(--bg-color);
+  background: var(--bg-secondary);
   color: var(--text-secondary);
   font-weight: 600;
+}
+
+:deep(.el-table td), :deep(.el-table th) {
+  padding: 12px 0;
+}
+
+:deep(.el-card) {
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+:deep(.el-card:hover) {
+  box-shadow: var(--shadow-md);
+}
+
+/* 响应式布局 */
+@media (max-width: 1200px) {
+  .stats-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-overview {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .stat-label {
+    font-size: 12px;
+  }
 }
 </style>

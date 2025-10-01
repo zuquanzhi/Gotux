@@ -34,7 +34,7 @@
       </template>
       
       <el-row :gutter="20" v-loading="loading">
-        <el-col :span="6" v-for="image in images" :key="image.id">
+        <el-col :xs="24" :sm="12" :md="8" :lg="6" v-for="image in images" :key="image.id">
           <el-card :body-style="{ padding: '0px' }" shadow="hover" class="image-card">
             <el-checkbox
               v-model="selectedImages"
@@ -295,9 +295,30 @@ onMounted(() => {
 
 <style scoped>
 .images-page {
-  max-width: 1400px;
-  margin: 0 auto;
   animation: fadeInUp 0.5s ease;
+}
+
+@media (max-width: 768px) {
+  .image-card {
+    margin-bottom: 16px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .header-actions .el-input {
+    width: 100% !important;
+    margin-right: 0 !important;
+    margin-bottom: 8px;
+  }
 }
 
 .card-header {

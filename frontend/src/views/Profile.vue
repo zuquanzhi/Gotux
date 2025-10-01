@@ -1,8 +1,8 @@
 <template>
   <div class="profile-page">
     <el-row :gutter="20">
-      <el-col :span="8">
-        <el-card>
+      <el-col :xs="24" :sm="24" :md="8" :lg="6">
+        <el-card class="sticky-card">
           <template #header>
             <div class="card-header">
               <span>个人信息</span>
@@ -43,7 +43,8 @@
         </el-card>
       </el-col>
       
-      <el-col :span="16">
+      <el-col :xs="24" :sm="24" :md="16" :lg="18">
+        <!-- 基本信息 -->
         <el-card>
           <template #header>
             <div class="card-header">
@@ -51,7 +52,7 @@
             </div>
           </template>
           
-          <el-form :model="profileForm" label-width="100px">
+          <el-form :model="profileForm" label-width="120px">
             <el-form-item label="邮箱">
               <el-input v-model="profileForm.email" />
             </el-form-item>
@@ -62,14 +63,177 @@
           </el-form>
         </el-card>
         
+        <!-- 链接设置 -->
         <el-card style="margin-top: 20px;">
           <template #header>
             <div class="card-header">
-              <span>修改密码</span>
+              <span>🔗 链接设置</span>
             </div>
           </template>
           
-          <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
+          <el-form :model="settingsForm" label-width="120px">
+            <el-form-item label="自定义域名">
+              <el-input 
+                v-model="settingsForm.custom_domain" 
+                placeholder="例如: https://img.example.com"
+              >
+                <template #prepend>
+                  <el-icon><Link /></el-icon>
+                </template>
+              </el-input>
+              <template #extra>
+                <span class="form-tip">配置后，图片链接将使用此域名替换默认域名</span>
+              </template>
+            </el-form-item>
+            
+            <el-form-item label="默认链接格式">
+              <el-select v-model="settingsForm.default_link_format" style="width: 100%;">
+                <el-option label="URL 直链" value="url" />
+                <el-option label="Markdown 格式" value="markdown" />
+                <el-option label="HTML 格式" value="html" />
+                <el-option label="BBCode 格式" value="bbcode" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item>
+              <el-button type="primary" @click="handleUpdateSettings">保存链接设置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        
+        <!-- 图片处理设置 -->
+        <el-card style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>🎨 图片处理设置</span>
+            </div>
+          </template>
+          
+          <el-form :model="settingsForm" label-width="120px">
+            <el-form-item label="自动压缩">
+              <el-switch v-model="settingsForm.compress_image" />
+              <template #extra>
+                <span class="form-tip">上传时自动压缩图片以节省空间</span>
+              </template>
+            </el-form-item>
+            
+            <el-form-item label="压缩质量" v-if="settingsForm.compress_image">
+              <el-slider 
+                v-model="settingsForm.compress_quality" 
+                :min="1" 
+                :max="100"
+                show-input
+              />
+              <template #extra>
+                <span class="form-tip">质量越高，文件越大 (建议 70-90)</span>
+              </template>
+            </el-form-item>
+            
+            <el-form-item label="启用水印">
+              <el-switch v-model="settingsForm.enable_watermark" />
+            </el-form-item>
+            
+            <el-form-item label="水印文字" v-if="settingsForm.enable_watermark">
+              <el-input 
+                v-model="settingsForm.watermark_text" 
+                placeholder="输入水印文字"
+              />
+            </el-form-item>
+            
+            <el-form-item label="水印位置" v-if="settingsForm.enable_watermark">
+              <el-select v-model="settingsForm.watermark_position" style="width: 100%;">
+                <el-option label="左上角" value="top-left" />
+                <el-option label="顶部居中" value="top-center" />
+                <el-option label="右上角" value="top-right" />
+                <el-option label="左侧居中" value="middle-left" />
+                <el-option label="正中心" value="center" />
+                <el-option label="右侧居中" value="middle-right" />
+                <el-option label="左下角" value="bottom-left" />
+                <el-option label="底部居中" value="bottom-center" />
+                <el-option label="右下角" value="bottom-right" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item>
+              <el-button type="primary" @click="handleUpdateSettings">保存图片设置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        
+        <!-- 上传限制设置 -->
+        <el-card style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>📁 上传限制设置</span>
+            </div>
+          </template>
+          
+          <el-form :model="settingsForm" label-width="120px">
+            <el-form-item label="单文件大小限制">
+              <el-input-number 
+                v-model="maxImageSizeMB" 
+                :min="0.1" 
+                :max="50"
+                :step="0.5"
+                :precision="1"
+              />
+              <span style="margin-left: 10px;">MB</span>
+              <template #extra>
+                <span class="form-tip">限制单个图片文件的最大大小</span>
+              </template>
+            </el-form-item>
+            
+            <el-form-item label="允许的格式">
+              <el-select 
+                v-model="allowedTypesArray" 
+                multiple 
+                style="width: 100%;"
+                placeholder="选择允许的图片格式"
+              >
+                <el-option label="JPG" value="jpg" />
+                <el-option label="JPEG" value="jpeg" />
+                <el-option label="PNG" value="png" />
+                <el-option label="GIF" value="gif" />
+                <el-option label="WebP" value="webp" />
+                <el-option label="BMP" value="bmp" />
+                <el-option label="SVG" value="svg" />
+              </el-select>
+            </el-form-item>
+            
+            <el-form-item label="存储配额">
+              <el-progress 
+                :percentage="storagePercentage" 
+                :color="storageColor"
+                :stroke-width="20"
+              >
+                <span class="storage-text">
+                  {{ formatBytes(settingsForm.used_storage) }} / {{ formatBytes(settingsForm.storage_quota) }}
+                </span>
+              </el-progress>
+            </el-form-item>
+            
+            <el-form-item label="图片审核">
+              <el-switch v-model="settingsForm.enable_image_review" />
+              <template #extra>
+                <span class="form-tip">上传图片后需要管理员审核才能公开</span>
+              </template>
+            </el-form-item>
+            
+            <el-form-item>
+              <el-button type="primary" @click="handleUpdateSettings">保存上传设置</el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        
+        <!-- 修改密码 -->
+        <el-card style="margin-top: 20px;">
+          <template #header>
+            <div class="card-header">
+              <span>🔒 修改密码</span>
+            </div>
+          </template>
+          
+          <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="120px">
             <el-form-item label="原密码" prop="oldPassword">
               <el-input v-model="passwordForm.oldPassword" type="password" show-password />
             </el-form-item>
@@ -93,10 +257,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { updateProfile, changePassword } from '@/api/auth'
+import { getSettings, updateSettings } from '@/api/settings'
 import { ElMessage } from 'element-plus'
+import { Link } from '@element-plus/icons-vue'
 
 const userStore = useUserStore()
 const passwordFormRef = ref()
@@ -109,6 +275,51 @@ const passwordForm = reactive({
   oldPassword: '',
   newPassword: '',
   confirmPassword: ''
+})
+
+const settingsForm = reactive({
+  custom_domain: '',
+  default_link_format: 'url',
+  enable_watermark: false,
+  watermark_text: '',
+  watermark_position: 'bottom-right',
+  compress_image: false,
+  compress_quality: 80,
+  max_image_size: 10485760, // 10MB in bytes
+  allowed_image_types: 'jpg,jpeg,png,gif,webp',
+  enable_image_review: false,
+  storage_quota: 1073741824, // 1GB
+  used_storage: 0
+})
+
+// 计算属性：MB 转换
+const maxImageSizeMB = computed({
+  get: () => (settingsForm.max_image_size / 1024 / 1024).toFixed(1),
+  set: (val) => {
+    settingsForm.max_image_size = Math.round(val * 1024 * 1024)
+  }
+})
+
+// 计算属性：允许的类型数组
+const allowedTypesArray = computed({
+  get: () => settingsForm.allowed_image_types ? settingsForm.allowed_image_types.split(',') : [],
+  set: (val) => {
+    settingsForm.allowed_image_types = val.join(',')
+  }
+})
+
+// 计算属性：存储使用百分比
+const storagePercentage = computed(() => {
+  if (settingsForm.storage_quota === 0) return 0
+  return Math.min((settingsForm.used_storage / settingsForm.storage_quota) * 100, 100)
+})
+
+// 计算属性：存储进度条颜色
+const storageColor = computed(() => {
+  const percentage = storagePercentage.value
+  if (percentage < 50) return '#67c23a'
+  if (percentage < 80) return '#e6a23c'
+  return '#f56c6c'
 })
 
 const validateConfirmPassword = (rule, value, callback) => {
@@ -140,6 +351,17 @@ const handleUpdateProfile = async () => {
   }
 }
 
+const handleUpdateSettings = async () => {
+  try {
+    await updateSettings(settingsForm)
+    ElMessage.success('设置保存成功')
+    await loadSettings()
+  } catch (error) {
+    console.error('Update settings error:', error)
+    ElMessage.error('保存设置失败')
+  }
+}
+
 const handleChangePassword = async () => {
   try {
     await passwordFormRef.value.validate()
@@ -156,12 +378,31 @@ const handleChangePassword = async () => {
   }
 }
 
+const loadSettings = async () => {
+  try {
+    const data = await getSettings()
+    Object.assign(settingsForm, data.settings)
+  } catch (error) {
+    console.error('Load settings error:', error)
+    ElMessage.error('加载设置失败')
+  }
+}
+
 const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-CN')
 }
 
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
+}
+
 onMounted(() => {
   profileForm.email = userStore.userInfo?.email || ''
+  loadSettings()
 })
 </script>
 
@@ -241,5 +482,70 @@ onMounted(() => {
 :deep(.el-button) {
   border-radius: var(--radius-md);
   font-weight: 500;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+  display: block;
+}
+
+:deep(.el-form-item__extra) {
+  margin-top: 4px;
+}
+
+:deep(.el-progress__text) {
+  font-size: 12px !important;
+  font-weight: 600;
+}
+
+.storage-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+:deep(.el-slider) {
+  margin-right: 20px;
+}
+
+:deep(.el-select) {
+  width: 100%;
+}
+
+:deep(.el-input-number) {
+  width: 150px;
+}
+
+:deep(.el-switch) {
+  --el-switch-on-color: var(--primary-color);
+}
+
+:deep(.el-progress) {
+  line-height: 1.5;
+}
+
+:deep(.el-card__header) {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-header span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sticky-card {
+  position: sticky;
+  top: 20px;
+}
+
+@media (max-width: 768px) {
+  .sticky-card {
+    position: relative;
+    top: 0;
+    margin-bottom: 20px;
+  }
 }
 </style>
