@@ -23,12 +23,18 @@
             <el-tag v-else type="danger">禁用</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="storage_quota" label="存储配额" width="150">
+          <template #default="{ row }">
+            <span v-if="row.storage_quota === 0">无限制</span>
+            <span v-else>{{ formatBytes(row.storage_quota) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="created_at" label="注册时间" width="180">
           <template #default="{ row }">
             {{ formatDate(row.created_at) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150">
+        <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button
               v-if="row.status === 'active' && row.role !== 'admin'"
@@ -46,6 +52,14 @@
             >
               激活
             </el-button>
+            <el-button
+              v-if="row.role !== 'admin'"
+              size="small"
+              type="primary"
+              @click="showQuotaDialog(row)"
+            >
+              配额
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -62,12 +76,40 @@
         />
       </div>
     </el-card>
+
+    <!-- 配额设置对话框 -->
+    <el-dialog v-model="quotaDialogVisible" title="设置存储配额" width="500px">
+      <el-form :model="quotaForm" label-width="100px">
+        <el-form-item label="用户">
+          <el-input v-model="quotaForm.username" disabled />
+        </el-form-item>
+        <el-form-item label="当前使用">
+          <el-input :value="formatBytes(quotaForm.storage_used || 0)" disabled />
+        </el-form-item>
+        <el-form-item label="存储配额">
+          <el-input
+            v-model.number="quotaForm.storage_quota_mb"
+            type="number"
+            placeholder="输入配额大小(MB),0表示无限制"
+          >
+            <template #append>MB</template>
+          </el-input>
+          <div style="margin-top: 8px; font-size: 12px; color: #909399;">
+            设置为 0 表示无限制。1 GB = 1024 MB
+          </div>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="quotaDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="updateQuota">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getAllUsers, updateUserStatus } from '@/api/admin'
+import { getAllUsers, updateUserStatus, updateUserQuota } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const loading = ref(false)
@@ -75,6 +117,14 @@ const users = ref([])
 const currentPage = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
+
+const quotaDialogVisible = ref(false)
+const quotaForm = ref({
+  user_id: 0,
+  username: '',
+  storage_used: 0,
+  storage_quota_mb: 0
+})
 
 const fetchUsers = async () => {
   try {
@@ -109,6 +159,37 @@ const updateStatus = async (userId, status) => {
       console.error('Update status error:', error)
     }
   }
+}
+
+const showQuotaDialog = (user) => {
+  quotaForm.value = {
+    user_id: user.id,
+    username: user.username,
+    storage_used: user.storage_used || 0,
+    storage_quota_mb: user.storage_quota ? Math.round(user.storage_quota / 1024 / 1024) : 0
+  }
+  quotaDialogVisible.value = true
+}
+
+const updateQuota = async () => {
+  try {
+    const quotaBytes = quotaForm.value.storage_quota_mb * 1024 * 1024
+    
+    await updateUserQuota(quotaForm.value.user_id, quotaBytes)
+    ElMessage.success('配额设置成功')
+    quotaDialogVisible.value = false
+    fetchUsers()
+  } catch (error) {
+    console.error('Update quota error:', error)
+  }
+}
+
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
 }
 
 const formatDate = (date) => {

@@ -8,6 +8,10 @@ export function updateUserStatus(id, status) {
   return request.put(`/admin/users/${id}/status`, { status })
 }
 
+export function updateUserQuota(id, storageQuota) {
+  return request.put(`/admin/users/${id}/quota`, { storage_quota: storageQuota })
+}
+
 export function getAllImages(params) {
   return request.get('/admin/images', { params })
 }

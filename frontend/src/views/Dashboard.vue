@@ -9,6 +9,9 @@
         <div class="stat-info">
           <div class="stat-value">{{ stat.value }}</div>
           <div class="stat-label">{{ stat.label }}</div>
+          <div v-if="stat.subtitle" class="stat-subtitle" :class="`text-${stat.color}`">
+            {{ stat.subtitle }}
+          </div>
         </div>
       </div>
     </div>
@@ -66,37 +69,67 @@ const userStore = useUserStore()
 const stats = ref({
   image_count: 0,
   storage_used: 0,
+  storage_quota: 0,
+  remaining_quota: 0,
+  quota_percent: 0,
   total_views: 0
 })
 const recentImages = ref([])
 const loading = ref(false)
 
-const statsData = computed(() => [
-  {
-    icon: Picture,
-    value: stats.value.image_count,
-    label: '图片总数',
-    color: 'blue'
-  },
-  {
-    icon: FolderOpened,
-    value: formatBytes(stats.value.storage_used),
-    label: '存储空间',
-    color: 'green'
-  },
-  {
-    icon: View,
-    value: stats.value.total_views,
-    label: '总浏览量',
-    color: 'purple'
-  },
-  {
-    icon: Calendar,
-    value: recentImages.value.length,
-    label: '最近上传',
-    color: 'orange'
+const statsData = computed(() => {
+  const data = [
+    {
+      icon: Picture,
+      value: stats.value.image_count,
+      label: '图片总数',
+      color: 'blue'
+    },
+    {
+      icon: FolderOpened,
+      value: getStorageDisplay(),
+      label: '存储空间',
+      color: getStorageColor(),
+      subtitle: getStorageSubtitle()
+    },
+    {
+      icon: View,
+      value: stats.value.total_views,
+      label: '总浏览量',
+      color: 'purple'
+    },
+    {
+      icon: Calendar,
+      value: recentImages.value.length,
+      label: '最近上传',
+      color: 'orange'
+    }
+  ]
+  return data
+})
+
+const getStorageDisplay = () => {
+  if (stats.value.storage_quota === 0) {
+    return formatBytes(stats.value.storage_used)
   }
-])
+  return `${formatBytes(stats.value.storage_used)} / ${formatBytes(stats.value.storage_quota)}`
+}
+
+const getStorageSubtitle = () => {
+  if (stats.value.storage_quota === 0) {
+    return '无限制'
+  }
+  const percent = stats.value.quota_percent.toFixed(1)
+  return `已使用 ${percent}%`
+}
+
+const getStorageColor = () => {
+  if (stats.value.storage_quota === 0) return 'green'
+  const percent = stats.value.quota_percent
+  if (percent >= 90) return 'red'
+  if (percent >= 70) return 'orange'
+  return 'green'
+}
 
 const formatBytes = (bytes) => {
   if (bytes === 0) return '0 B'
@@ -211,6 +244,16 @@ onMounted(() => {
   color: var(--text-tertiary);
   font-weight: 500;
 }
+
+.stat-subtitle {
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.text-green { color: #67c23a; }
+.text-orange { color: #e6a23c; }
+.text-red { color: #f56c6c; }
 
 .card-header {
   display: flex;

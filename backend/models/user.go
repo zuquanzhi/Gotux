@@ -1,4 +1,7 @@
+
 package models
+
+
 
 import (
 	"errors"
@@ -33,6 +36,7 @@ type User struct {
 	EnableImageReview bool   `gorm:"default:false" json:"enable_image_review"`                   // 图片审核
 	StorageQuota      int64  `gorm:"default:1073741824" json:"storage_quota"`                    // 存储配额 (字节，默认1GB)
 	UsedStorage       int64  `gorm:"default:0" json:"used_storage"`                              // 已使用存储
+	StorageUsed       int64  `gorm:"-" json:"storage_used"`                                      // 展示用：已使用存储（非数据库字段）
 
 	Images []Image `gorm:"foreignKey:UserID" json:"images,omitempty"`
 }
@@ -123,6 +127,12 @@ func GetAllUsers(page, pageSize int) ([]User, int64, error) {
 		return nil, 0, err
 	}
 
+	// 为每个用户添加存储使用量
+	for i := range users {
+		storageUsed, _ := GetUserStorageUsed(users[i].ID)
+		users[i].StorageUsed = storageUsed
+	}
+
 	return users, total, nil
 }
 
@@ -137,6 +147,7 @@ func CreateDefaultAdmin() {
 			Email:    "admin@gotux.com",
 			Role:     "admin",
 			Status:   "active",
+			StorageQuota: 0, // 管理员无限制
 		}
 
 		if err := admin.HashPassword("admin123"); err != nil {
@@ -160,11 +171,15 @@ func (u *User) IsActive() bool {
 }
 
 // ValidateUser 验证用户登录
+// FixAdminQuota 批量修正所有管理员配额为无限制（0）
+func FixAdminQuota() error {
+	return DB.Model(&User{}).Where("role = ?", "admin").Update("storage_quota", 0).Error
+}
 func ValidateUser(username, password string) (*User, error) {
 	user, err := GetUserByUsername(username)
 	if err != nil {
-		return nil, errors.New("用户名或密码错误")
-	}
+	return nil, errors.New("用户名或密码错误")
+}
 
 	if !user.IsActive() {
 		return nil, errors.New("账户已被禁用")

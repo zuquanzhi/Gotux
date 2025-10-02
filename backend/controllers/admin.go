@@ -81,6 +81,54 @@ func UpdateUserStatus(c *gin.Context) {
 	})
 }
 
+// UpdateUserQuota 更新用户存储配额(管理员)
+func UpdateUserQuota(c *gin.Context) {
+	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的用户ID"})
+		return
+	}
+
+	var req struct {
+		StorageQuota int64 `json:"storage_quota" binding:"required,min=0"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		return
+	}
+
+	user, err := models.GetUserByID(uint(userID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	// 检查新配额是否小于当前使用量
+	storageUsed, _ := models.GetUserStorageUsed(uint(userID))
+	if req.StorageQuota > 0 && req.StorageQuota < storageUsed {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":         "新配额不能小于当前使用量",
+			"storage_used":  storageUsed,
+			"storage_quota": req.StorageQuota,
+		})
+		return
+	}
+
+	user.StorageQuota = req.StorageQuota
+	if err := user.Update(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":       "配额更新成功",
+		"user_id":       user.ID,
+		"storage_quota": user.StorageQuota,
+		"storage_used":  storageUsed,
+	})
+}
+
 // GetSystemStats 获取系统统计信息
 func GetSystemStats(c *gin.Context) {
 	var userCount int64

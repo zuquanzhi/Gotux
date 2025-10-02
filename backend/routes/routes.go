@@ -59,6 +59,7 @@ func SetupRoutes(r *gin.Engine) {
 			{
 				admin.GET("/users", controllers.GetAllUsers)
 				admin.PUT("/users/:id/status", controllers.UpdateUserStatus)
+				admin.PUT("/users/:id/quota", controllers.UpdateUserQuota)
 				admin.GET("/images", controllers.GetAllImagesAdmin)
 				admin.GET("/stats", controllers.GetSystemStats)
 			}

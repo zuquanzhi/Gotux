@@ -27,6 +27,20 @@ func UploadImage(c *gin.Context) {
 		return
 	}
 
+	// 获取用户信息和配额设置
+	user, err := models.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	// 检查存储配额
+	storageUsed, err := models.GetUserStorageUsed(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取存储使用量失败"})
+		return
+	}
+
 	// 解析表单
 	form, err := c.MultipartForm()
 	if err != nil {
@@ -37,6 +51,25 @@ func UploadImage(c *gin.Context) {
 	files := form.File["files"]
 	if len(files) == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "没有上传文件"})
+		return
+	}
+
+	// 计算本次上传总大小
+	var totalUploadSize int64
+	for _, file := range files {
+		totalUploadSize += file.Size
+	}
+
+	// 检查是否超过配额
+	if user.StorageQuota > 0 && storageUsed+totalUploadSize > user.StorageQuota {
+		remainingQuota := user.StorageQuota - storageUsed
+		c.JSON(http.StatusForbidden, gin.H{
+			"error":           "存储空间不足",
+			"storage_used":    storageUsed,
+			"storage_quota":   user.StorageQuota,
+			"remaining_quota": remainingQuota,
+			"upload_size":     totalUploadSize,
+		})
 		return
 	}
 
@@ -499,6 +532,13 @@ func GetStats(c *gin.Context) {
 		return
 	}
 
+	// 获取用户信息(包含配额)
+	user, err := models.GetUserByID(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
 	// 获取图片总数
 	var imageCount int64
 	models.DB.Model(&models.Image{}).Where("user_id = ?", userID).Count(&imageCount)
@@ -514,10 +554,24 @@ func GetStats(c *gin.Context) {
 		Select("COALESCE(SUM(image_stats.view_count), 0)").
 		Scan(&totalViews)
 
+	// 计算配额使用百分比和剩余空间
+	var quotaPercent float64
+	var remainingQuota int64
+	if user.StorageQuota > 0 {
+		quotaPercent = float64(storageUsed) / float64(user.StorageQuota) * 100
+		remainingQuota = user.StorageQuota - storageUsed
+	} else {
+		quotaPercent = 0
+		remainingQuota = -1 // -1 表示无限制
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"image_count":  imageCount,
-		"storage_used": storageUsed,
-		"total_views":  totalViews,
+		"image_count":      imageCount,
+		"storage_used":     storageUsed,
+		"storage_quota":    user.StorageQuota,
+		"remaining_quota":  remainingQuota,
+		"quota_percent":    quotaPercent,
+		"total_views":      totalViews,
 	})
 }
 

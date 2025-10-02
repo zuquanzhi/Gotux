@@ -17,8 +17,13 @@ func main() {
 	// 初始化数据库
 	models.InitDB()
 
-	// 创建默认管理员账户
-	models.CreateDefaultAdmin()
+		// 创建默认管理员账户
+		models.CreateDefaultAdmin()
+
+		// 自动修正所有管理员配额为无限制（0）
+		if err := models.FixAdminQuota(); err != nil {
+			log.Println("自动修正管理员配额失败:", err)
+		}
 
 	// 设置 Gin 模式
 	gin.SetMode(gin.ReleaseMode)
